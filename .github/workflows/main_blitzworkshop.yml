@@ -1,0 +1,35 @@
+# Docs for the Azure Web Apps Deploy action: https://github.com/Azure/webapps-deploy
+# More GitHub Actions for Azure: https://github.com/Azure/actions
+
+name: Build and deploy container app to Azure Web App - blitzworkshop
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+jobs:
+  build-and-deploy:
+    runs-on: 'ubuntu-latest'
+
+    steps:
+    - uses: actions/checkout@master
+
+    - uses: azure/docker-login@v1
+      with:
+        login-server: https://blitzworkshop.azurecr.io/
+        username: ${{ secrets.AzureAppService_ContainerUsername_f941e1cf9e474c0e85b1d11436329aad }}
+        password: ${{ secrets.AzureAppService_ContainerPassword_e8b99a370a9749f08f0fb2e000738a49 }}
+
+    - run: |
+        docker build . -t blitzworkshop.azurecr.io/${{ secrets.AzureAppService_ContainerUsername_f941e1cf9e474c0e85b1d11436329aad }}/workshop/dotjs-leaderboard:${{ github.sha }}
+        docker push blitzworkshop.azurecr.io/${{ secrets.AzureAppService_ContainerUsername_f941e1cf9e474c0e85b1d11436329aad }}/workshop/dotjs-leaderboard:${{ github.sha }}
+
+    - name: Deploy to Azure Web App
+      uses: azure/webapps-deploy@v2
+      with:
+        app-name: 'blitzworkshop'
+        slot-name: 'production'
+        publish-profile: ${{ secrets.AzureAppService_PublishProfile_7ebc329508424c3898b4933dde9238c0 }}
+        images: 'blitzworkshop.azurecr.io/${{ secrets.AzureAppService_ContainerUsername_f941e1cf9e474c0e85b1d11436329aad }}/workshop/dotjs-leaderboard:${{ github.sha }}'
